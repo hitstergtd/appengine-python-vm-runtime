@@ -94,7 +94,8 @@ WRONG_IP = '192.168.0.1'
 
 FAKE_APPINFO_EXTERNAL = MagicMock(handlers=FAKE_HANDLERS,
                                   env_variables={FAKE_ENV_KEY: FAKE_ENV_VALUE,
-                                                 'USER_EMAIL': BAD_USER_EMAIL})
+                                                 'USER_EMAIL': BAD_USER_EMAIL},
+                                  default_expiration='2d 3h')
 
 FAKE_APPENGINE_CONFIG = MagicMock(
     server_software='server', partition='partition', appid='appid',
@@ -223,6 +224,20 @@ class MetaAppTestCase(unittest.TestCase):
     expired_time = current_time + extra_time
     self.assertEqual(response.headers['Expires'],
                      http.http_date(expired_time))
+
+  def test_static_file_default_expires(self):
+    response = self.client.get('/favicon.ico')
+    self.assertEqual(response.status_code, httplib.OK)
+    with open(static_path('test_statics/favicon.ico')) as f:
+      self.assertEqual(response.data, f.read())
+    current_time = FAKE_CURRENT_TIME
+    extra_time = datetime.timedelta(
+        seconds=appinfo.ParseExpiration('2d 3h'))
+    expired_time = current_time + extra_time
+    self.assertEqual(response.headers['Expires'],
+                     http.http_date(expired_time))
+
+
 
 
   def test_static_file_wildcard(self):

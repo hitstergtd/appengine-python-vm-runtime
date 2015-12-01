@@ -91,7 +91,7 @@ def get_add_middleware_from_appengine_config():
     return None
 
 
-def static_app_for_handler(handler):
+def static_app_for_handler(handler, default_expire=None):
   """Returns a WSGI app that serves static files as directed by the handler.
 
   Args:
@@ -120,7 +120,7 @@ def static_app_for_handler(handler):
   if handler.expiration:
     expiration = appinfo.ParseExpiration(handler.expiration)
   else:
-    expiration = None
+    expiration = appinfo.ParseExpiration(default_expire)
   return static_files.static_app_for_regex_and_files(
       url_re, files, upload_re,
       mime_type=handler.mime_type,
@@ -145,7 +145,7 @@ def static_dir_url_re(handler):
     return handler.url
 
 
-def load_user_scripts_into_handlers(handlers):
+def load_user_scripts_into_handlers(appinfo):
   """Preloads user scripts, wrapped in env_config middleware if present.
 
   Args:
@@ -158,7 +158,7 @@ def load_user_scripts_into_handlers(handlers):
       - app: The fully loaded app corresponding to the script.
   """
   loaded_handlers = []
-  for handler in handlers:
+  for handler in appinfo.handlers:
     if handler.script:  # An application, not a static files directive.
       url_re = handler.url
       app = app_for_script(handler.script)
@@ -167,7 +167,8 @@ def load_user_scripts_into_handlers(handlers):
         url_re = handler.url
       else:  # This is a "static_dir" directive.
         url_re = static_dir_url_re(handler)
-      app = static_app_for_handler(handler)
+      app = static_app_for_handler(handler,
+                                   default_expire=appinfo.default_expiration)
     loaded_handlers.append((url_re, app))
   logging.info('Parsed handlers: %r',
                [url_re for (url_re, _) in loaded_handlers])
