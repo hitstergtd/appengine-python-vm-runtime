@@ -44,12 +44,13 @@ def static_app_for_regex_and_files(url_re, files_mapping, upload_re,
     mime_type: A mime type to apply to all files. If absent,
       mimetypes.guess_type() is used.
     http_headers: dictionary of header keys and values.
-    expiration: String of form 'Xd Yh Zs' as public documentation states.
+    expiration: datetime.timedelta object representing how long the static
+      asset ought to be cached.
 
   Returns:
     A static file-serving WSGI app closed over the inputs.
   """
-  @wrappers.Request.application  # Transforms wsgi_env, start_response args into request
+  @wrappers.Request.application
   def serve_static_files(request):
     """Serve a static file."""
     # First, match the path against the regex.
@@ -82,8 +83,7 @@ def static_app_for_regex_and_files(url_re, files_mapping, upload_re,
     if http_headers:
       headers.extend(http_headers)
     elif expiration:
-      expires = datetime.datetime.now() + datetime.timedelta(
-          seconds=expiration)
+      expires = datetime.datetime.now() + expiration
       headers['Expires'] = http.http_date(expires)
 
     wrapped_file = wsgi.wrap_file(request.environ, fp)

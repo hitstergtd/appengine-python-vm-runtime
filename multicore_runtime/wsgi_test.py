@@ -31,13 +31,12 @@ from werkzeug import wrappers
 
 from google.appengine.api import appinfo
 
+
 class FakeDatetime(datetime.datetime):
 
   @staticmethod
   def now():
     return FAKE_CURRENT_TIME
-
-datetime.datetime = FakeDatetime
 
 
 def script_path(script, test_name=__name__):
@@ -214,6 +213,9 @@ class MetaAppTestCase(unittest.TestCase):
     self.assertEqual(response.headers['X-Bar-Header'], 'bar value')
 
   def test_static_file_expires(self):
+    # Patching the datetime class
+    datetime.datetime = FakeDatetime
+
     response = self.client.get('/expiration')
     self.assertEqual(response.status_code, httplib.OK)
     with open(static_path('test_statics/favicon.ico')) as f:
@@ -226,6 +228,9 @@ class MetaAppTestCase(unittest.TestCase):
                      http.http_date(expired_time))
 
   def test_static_file_default_expires(self):
+    # Patching the datetime class
+    datetime.datetime = FakeDatetime
+
     response = self.client.get('/favicon.ico')
     self.assertEqual(response.status_code, httplib.OK)
     with open(static_path('test_statics/favicon.ico')) as f:
@@ -236,9 +241,6 @@ class MetaAppTestCase(unittest.TestCase):
     expired_time = current_time + extra_time
     self.assertEqual(response.headers['Expires'],
                      http.http_date(expired_time))
-
-
-
 
   def test_static_file_wildcard(self):
     response = self.client.get('/wildcard_statics/favicon.ico')
