@@ -43,6 +43,8 @@ def static_app_for_regex_and_files(url_re, files_mapping, upload_re,
       arguments.
     mime_type: A mime type to apply to all files. If absent,
       mimetypes.guess_type() is used.
+    http_headers: dictionary of header keys and values.
+    expiration: String of form 'Xd Yh Zs' as public documentation states.
 
   Returns:
     A static file-serving WSGI app closed over the inputs.

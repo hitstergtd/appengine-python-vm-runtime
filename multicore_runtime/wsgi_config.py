@@ -97,6 +97,7 @@ def static_app_for_handler(handler, default_expire=None):
   Args:
     handler: An individual handler from appinfo_external.handlers
       (appinfo.URLMap)
+    default_expire: A top-level default expiration time for static assets.
 
   Returns:
     A static file-serving WSGI app closed over the handler information.
@@ -149,7 +150,7 @@ def load_user_scripts_into_handlers(appinfo):
   """Preloads user scripts, wrapped in env_config middleware if present.
 
   Args:
-    handlers: appinfo.handlers data as provided by get_module_config()
+    appinfo: AppInfoExternal object mostly used to get it's handlers.
 
   Returns:
     A list of tuples suitable for configuring the dispatcher() app,
