@@ -14,18 +14,23 @@
 #
 """Static file serving functionality invoked by wsgi_config.py."""
 
+import datetime
 import httplib
 import logging
 import mimetypes
 import os
 import re
 
+from werkzeug import datastructures
+from werkzeug import http
 from werkzeug import wrappers
 from werkzeug import wsgi
 
 
 def static_app_for_regex_and_files(url_re, files_mapping, upload_re,
-                                   mime_type=None):
+                                   mime_type=None,
+                                   http_headers=None,
+                                   expiration=None):
   """Returns a WSGI app that serves static files.
 
   Args:
@@ -71,8 +76,17 @@ def static_app_for_regex_and_files(url_re, files_mapping, upload_re,
       logging.warn('Requested non-existent filename %s', filename)
       return wrappers.Response(status=httplib.NOT_FOUND)
 
+    headers = datastructures.Headers()
+    if http_headers:
+      headers.extend(http_headers)
+    elif expiration:
+      expires = datetime.datetime.now() + datetime.timedelta(
+          seconds=expiration)
+      headers['Expires'] = http.http_date(expires)
+
     wrapped_file = wsgi.wrap_file(request.environ, fp)
     return wrappers.Response(
         wrapped_file, direct_passthrough=True,
-        mimetype=mime_type or mimetypes.guess_type(filename)[0])
+        mimetype=mime_type or mimetypes.guess_type(filename)[0],
+        headers=headers)
   return serve_static_files

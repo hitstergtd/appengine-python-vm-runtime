@@ -117,8 +117,15 @@ def static_app_for_handler(handler):
       logging.error('No script, static_files or static_dir found for %s',
                     handler)
       return None
+  if handler.expiration:
+    expiration = appinfo.ParseExpiration(handler.expiration)
+  else:
+    expiration = None
   return static_files.static_app_for_regex_and_files(
-      url_re, files, upload_re, mime_type=handler.mime_type)
+      url_re, files, upload_re,
+      mime_type=handler.mime_type,
+      http_headers=handler.http_headers,
+      expiration=expiration)
 
 
 def static_dir_url_re(handler):
