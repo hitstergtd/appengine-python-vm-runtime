@@ -212,10 +212,8 @@ class MetaAppTestCase(unittest.TestCase):
     self.assertTrue(response.headers.has_key('X-Bar-Header'))
     self.assertEqual(response.headers['X-Bar-Header'], 'bar value')
 
+  @patch('datetime.datetime', FakeDatetime)
   def test_static_file_expires(self):
-    # Patching the datetime class
-    datetime.datetime = FakeDatetime
-
     response = self.client.get('/expiration')
     self.assertEqual(response.status_code, httplib.OK)
     with open(static_path('test_statics/favicon.ico')) as f:
@@ -227,10 +225,8 @@ class MetaAppTestCase(unittest.TestCase):
     self.assertEqual(response.headers['Expires'],
                      http.http_date(expired_time))
 
+  @patch('datetime.datetime', FakeDatetime)
   def test_static_file_default_expires(self):
-    # Patching the datetime class
-    datetime.datetime = FakeDatetime
-
     response = self.client.get('/favicon.ico')
     self.assertEqual(response.status_code, httplib.OK)
     with open(static_path('test_statics/favicon.ico')) as f:

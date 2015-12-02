@@ -147,11 +147,11 @@ def static_dir_url_re(handler):
     return handler.url
 
 
-def load_user_scripts_into_handlers(app):
+def load_user_scripts_into_handlers(app_info):
   """Preloads user scripts, wrapped in env_config middleware if present.
 
   Args:
-    app: AppInfoExternal object mostly used to get it's handlers.
+    app_info: AppInfoExternal object mostly used to get it's handlers.
 
   Returns:
     A list of tuples suitable for configuring the dispatcher() app,
@@ -160,7 +160,7 @@ def load_user_scripts_into_handlers(app):
       - app: The fully loaded app corresponding to the script.
   """
   loaded_handlers = []
-  for handler in app.handlers:
+  for handler in app_info.handlers:
     if handler.script:  # An application, not a static files directive.
       url_re = handler.url
       app = app_for_script(handler.script)
@@ -170,7 +170,7 @@ def load_user_scripts_into_handlers(app):
       else:  # This is a "static_dir" directive.
         url_re = static_dir_url_re(handler)
       app = static_app_for_handler(handler,
-                                   default_expire=app.default_expiration)
+                                   default_expire=app_info.default_expiration)
     loaded_handlers.append((url_re, app))
   logging.info('Parsed handlers: %r',
                [url_re for (url_re, _) in loaded_handlers])
