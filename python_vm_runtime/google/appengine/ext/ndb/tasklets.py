@@ -73,6 +73,7 @@ from .google_imports import datastore_errors
 from .google_imports import datastore_pbs
 from .google_imports import datastore_rpc
 from .google_imports import namespace_manager
+from .google_imports import vmruntime_utils
 
 from . import eventloop
 from . import utils
@@ -97,14 +98,13 @@ def _is_generator(obj):
   return isinstance(obj, types.GeneratorType)
 
 
-class _State(utils.threading_local):
+class _State(vmruntime_utils.RequestLocal):
   """Hold thread-local state."""
-
-  current_context = None
 
   def __init__(self):
     super(_State, self).__init__()
     self.all_pending = set()
+    self.current_context = None
 
   def add_pending(self, fut):
     _logging_debug('all_pending: add %s', fut)

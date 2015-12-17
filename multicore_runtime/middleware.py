@@ -17,8 +17,12 @@
 import httplib
 import logging
 import os
+import uuid
 
 from werkzeug import wrappers
+from werkzeug import wsgi
+
+from . import utils
 
 
 # A dict of reserved env keys; the value is used as the default if not
@@ -97,6 +101,9 @@ def reset_environment_middleware(app, frozen_environment, frozen_user_env,
     # Tweak the environment to hide the service bridge.
     os.environ.update(get_env_to_hide_service_bridge(request.environ))
 
+    # TODO(bryanmau): Remove this hack and find the proper way to get or
+    # generate a request id.
+    os.environ['X_REQ_ID'] = str(uuid.uuid4())
     return app
 
   return reset_environment_wrapper
@@ -220,3 +227,22 @@ def health_check_middleware(app):
       return app
 
   return health_check_intercept_wrapper
+
+def callback_middleware(app):
+  """Calls the request-end callback that the app may have set
+
+  Args:
+    app: The WSGI app to wrap.
+
+  Returns:
+    The wrapped app, also a WSGI app.
+  """
+
+  def callback_wrapper(environ, start_response):
+    """Call the WSGI app and then invoke the request-end callbacks"""
+    try:
+      return app(environ, start_response)
+    finally:
+      utils._callback_storage.callback_by_request()
+
+  return callback_wrapper

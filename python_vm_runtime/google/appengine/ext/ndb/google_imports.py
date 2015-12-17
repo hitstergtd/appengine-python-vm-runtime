@@ -37,6 +37,7 @@ if normal_environment:
   from google.appengine.ext import gql
   from google.appengine.runtime import apiproxy_errors
   from google.net.proto import ProtocolBuffer
+  from google.appengine.vmruntime import utils as vmruntime_utils
 else:
   from google3.apphosting.api.blobstore import blobstore as api_blobstore
   from google3.apphosting.api import apiproxy_rpc

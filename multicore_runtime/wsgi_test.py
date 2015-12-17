@@ -22,6 +22,7 @@ import threading
 import unittest
 
 from . import wsgi_config
+from . import utils
 
 from mock import MagicMock
 from mock import patch
@@ -81,6 +82,7 @@ FAKE_HANDLERS = [
                    upload=static_path('test_statics/(.*)')),
     appinfo.URLMap(url='/static_dir',
                    static_dir=static_path('test_statics')),
+    appinfo.URLMap(url='/setcallback', script=script_path('setup_callback')),
     ]
 HELLO_STRING = 'Hello World!'
 
@@ -105,6 +107,9 @@ FAKE_APPENGINE_CONFIG = MagicMock(
 # Global event flags used for concurrency tests.
 concurrent_request_is_started = threading.Event()
 concurrent_request_should_proceed = threading.Event()
+
+# Global flags used for callback tests.
+callback_called = False
 
 # These tests will deliberately cause ERROR level logs, so let's disable them.
 logging.basicConfig(level=logging.CRITICAL)
@@ -139,6 +144,15 @@ def sort_os_environ_keys(request):  # pylint: disable=unused-argument
   return wrappers.Response(''.join(
       '%s=%s\n' % (k, v) for k, v in sorted(os.environ.iteritems())
       ))
+
+@wrappers.Request.application
+def setup_callback(request):
+  def callback():
+    global callback_called
+    callback_called = True
+
+  utils.SetRequestEndCallback(callback)
+  return wrappers.Response("pass!")
 
 
 class MetaAppTestCase(unittest.TestCase):
@@ -353,3 +367,10 @@ class MetaAppTestCase(unittest.TestCase):
     # validate contents extensively.
     self.assertIn('REQUEST_METHOD', response.data)
     self.assertIn('GET', response.data)
+
+  # Tests ability to set a callback that is invoked when the request ends
+  def test_request_callback(self):
+    response = self.client.get('/setcallback')
+    self.assertEqual(response.status_code, httplib.OK)
+    self.assertTrue(callback_called)
+

@@ -17,6 +17,7 @@ import time
 
 from .google_imports import apiproxy_rpc
 from .google_imports import datastore_rpc
+from .google_imports import vmruntime_utils
 
 from . import utils
 
@@ -248,8 +249,9 @@ class EventLoop(object):
         break
 
 
-class _State(utils.threading_local):
-  event_loop = None
+class _State(vmruntime_utils.RequestLocal):
+  def __init__(self):
+    self.event_loop = None
 
 
 _EVENT_LOOP_KEY = '__EVENT_LOOP__'
